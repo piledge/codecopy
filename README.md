@@ -1,2 +1,2 @@
 # codecopy
-Helper to generate fast LLM-prompts for coding
+A Modul to create Prompts for coding with LLMs
