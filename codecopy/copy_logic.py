@@ -1,4 +1,3 @@
-# C:\Users\Michael\PycharmProjects\codecopy\codecopy\copy_logic.py
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -46,7 +45,6 @@ def strip_comments(lines: list[str]) -> list[str]:
     kept = []
     for tok in tokenize.generate_tokens(StringIO(source).readline):
         if tok.type in (tokenize.COMMENT, tokenize.NL):
-            # Kommentare und reine NL‑Tokens überspringen
             continue
         kept.append(tok)
 
@@ -120,6 +118,7 @@ def copy_files_to_clipboard(
 ):
     print(f"\nSuche Dateien und kopiere Inhalte in '{project_name}' ...")
     base_paths = [Path(project_path).resolve()]
+    project_root = base_paths[0]
     all_files = []
     for p in base_paths:
         all_files.extend(
@@ -135,10 +134,16 @@ def copy_files_to_clipboard(
         print(f"\n{RED}Keine Dateien zum Kopieren gefunden.{RESET}")
         return
 
+    file_token_map = {}
+    try:
+        _encoding = tiktoken.get_encoding("cl100k_base")
+    except Exception:
+        _encoding = None
+
     file_count = len(all_files)
     tree_text = build_directory_tree(base_paths, allowed_extensions, exclude_dirs, exclude_files)
 
-    contents = ["--- Verzeichnisstruktur / Dateien ---", tree_text, ""]
+    contents = ["--- Verzeichnis-/Dateistruktur ---", tree_text, ""]
     total_lines = 0
     total_raw_lines = 0
 
@@ -153,10 +158,22 @@ def copy_files_to_clipboard(
             else:
                 cleaned = [ln.rstrip("\n") for ln in lines]
 
+            if _encoding is not None:
+                file_token_map[f.resolve()] = len(_encoding.encode("\n".join(cleaned)))
+            else:
+                file_token_map[f.resolve()] = 0
+
             total_lines += len(cleaned)
-            contents.append(f"--- Start: {f} ---")
+
+            try:
+                rel_path = f.relative_to(project_root).as_posix()
+            except ValueError:
+                rel_path = f.name
+            rel_display = f"./{rel_path}"
+
+            contents.append(f"--- Start: {rel_display} ---")
             contents.extend(cleaned)
-            contents.append(f"--- Ende:   {f} ---")
+            contents.append(f"--- Ende:  {rel_display} ---")
         except Exception as e:
             print(f"{RED}Fehler beim Lesen von {f}: {e}{RESET}")
 
@@ -168,9 +185,73 @@ def copy_files_to_clipboard(
     except Exception:
         token_count = 0
 
+    tree_console_lines = []
+
+    def recurse_console(dir_path: Path, prefix=""):
+        if not dir_path.is_dir():
+            return
+        entries = []
+        for entry in sorted(dir_path.iterdir()):
+            if entry.is_dir():
+                if entry.name.lower() in EXCLUDE_DIRS_DEFAULT or (exclude_dirs and entry.name in exclude_dirs):
+                    continue
+                entries.append(entry)
+            else:
+                if not is_valid_file(entry, allowed_extensions, exclude_files):
+                    continue
+                entries.append(entry)
+        for idx, entry in enumerate(entries):
+            connector = '└── ' if idx == len(entries) - 1 else '├── '
+            if entry.is_dir():
+                tree_console_lines.append(f"{prefix}{connector}{entry.name}")
+                extension = '    ' if idx == len(entries) - 1 else '│   '
+                recurse_console(entry, prefix + extension)
+            else:
+                tok = file_token_map.get(entry.resolve(), 0)
+                tree_console_lines.append(f"{prefix}{connector}{entry.name} {tok:>6}")
+
+    for root in base_paths:
+        if root.is_dir():
+            tree_console_lines.append(root.name)
+            recurse_console(root)
+        elif root.is_file():
+            tok = file_token_map.get(root.resolve(), 0)
+            tree_console_lines.append(f"{root.name} {tok:>6}")
+
+    max_path_len = 0
+    for ln in tree_console_lines:
+        stripped = ln.rstrip()
+        if stripped and stripped[-1].isdigit():
+            path_len = len(ln) - 7
+            if path_len > max_path_len:
+                max_path_len = path_len
+
+    TOKEN_GAP = 4
+    token_col_start = max_path_len + TOKEN_GAP
+
+    header_inserted = False
+    for idx, original in enumerate(tree_console_lines):
+        stripped = original.rstrip()
+        if stripped and stripped[-1].isdigit():
+            path_part = original[:-7].rstrip()
+            token_part = original[-7:]
+            pad = token_col_start - len(path_part)
+            if pad < 0:
+                pad = 0
+            tree_console_lines[idx] = f"{path_part}{' ' * pad}{token_part}"
+        else:
+            if not header_inserted and idx > 0:
+                pad = token_col_start - len(original.rstrip())
+                if pad < 1:
+                    pad = 1
+                tree_console_lines[idx] = f"{original}{' ' * pad} Tokens"
+                header_inserted = True
+
+    tree_text_console = "\n".join(tree_console_lines)
+
     try:
         pyperclip.copy(combined)
-        print(f"\n{tree_text}")
+        print(f"\n{tree_text_console}")
         print(f"\n{GREEN}{file_count} Dateien in die Zwischenablage kopiert.{RESET}")
         print(f"Code-Zeilen:  {total_lines:>6}")
         print(f"Gesamtzeilen: {total_raw_lines:>6}")
