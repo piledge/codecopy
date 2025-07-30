@@ -1,3 +1,4 @@
+# C:\Users\Michael\PycharmProjects\codecopy\codecopy\copy_logic.py
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -10,11 +11,14 @@ Created on 27.07.2025 at 17:52
 import fnmatch
 import os
 from pathlib import Path
+
 import pyperclip
 import tiktoken
-
+from io import StringIO
+import tokenize
 
 EXCLUDE_DIRS_DEFAULT = ["migrations", "__pycache__", "node_modules", ".git", ".idea", ".venv",]
+
 RED = "\033[31m"
 GREEN = "\033[32m"
 YELLOW = "\033[33m"
@@ -26,7 +30,9 @@ thres2_token = 16000
 
 
 def is_valid_file(file_path: Path, extensions=None, exclude_files=None):
-    if file_path.suffix.lower() == '.ico':
+    if file_path.name == '.gitignore':
+        return False
+    if file_path.suffix.lower() in ('.ico', '.exe'):
         return False
     if extensions and file_path.suffix not in extensions:
         return False
@@ -35,13 +41,17 @@ def is_valid_file(file_path: Path, extensions=None, exclude_files=None):
     return True
 
 
-def strip_comments(lines):
-    cleaned = []
-    for line in lines:
-        part = line.split('#')[0].rstrip('\n')
-        if part.strip():
-            cleaned.append(part)
-    return cleaned
+def strip_comments(lines: list[str]) -> list[str]:
+    source = "".join(lines)
+    kept = []
+    for tok in tokenize.generate_tokens(StringIO(source).readline):
+        if tok.type in (tokenize.COMMENT, tokenize.NL):
+            # Kommentare und reine NL‑Tokens überspringen
+            continue
+        kept.append(tok)
+
+    cleaned_code = tokenize.untokenize(kept)
+    return [ln.rstrip("\n") for ln in cleaned_code.splitlines() if ln.strip()]
 
 
 def collect_files_from_path(path: Path, extensions=None, exclude_dirs=None, exclude_files=None):
@@ -66,6 +76,7 @@ def collect_files_from_path(path: Path, extensions=None, exclude_dirs=None, excl
 def build_directory_tree(roots, extensions=None, exclude_dirs=None, exclude_files=None):
     if not isinstance(roots, (list, tuple)):
         roots = [roots]
+
     tree_lines = []
 
     def recurse(dir_path: Path, prefix=""):
@@ -87,6 +98,7 @@ def build_directory_tree(roots, extensions=None, exclude_dirs=None, exclude_file
             if entry.is_dir():
                 extension = '    ' if idx == len(entries) - 1 else '│   '
                 recurse(entry, prefix + extension)
+
     for root in roots:
         if root.is_dir():
             tree_lines.append(root.name)
@@ -97,7 +109,15 @@ def build_directory_tree(roots, extensions=None, exclude_dirs=None, exclude_file
     return "\n".join(tree_lines)
 
 
-def copy_files_to_clipboard(project_name, project_path, allowed_extensions=None, exclude_dirs=None, exclude_files=None, comment=None):
+def copy_files_to_clipboard(
+    project_name,
+    project_path,
+    allowed_extensions=None,
+    exclude_dirs=None,
+    exclude_files=None,
+    comment=None,
+    remove_comments: bool = True,
+):
     print(f"\nSuche Dateien und kopiere Inhalte in '{project_name}' ...")
     base_paths = [Path(project_path).resolve()]
     all_files = []
@@ -110,37 +130,49 @@ def copy_files_to_clipboard(project_name, project_path, allowed_extensions=None,
                 exclude_files=exclude_files
             )
         )
+
     if not all_files:
         print(f"\n{RED}Keine Dateien zum Kopieren gefunden.{RESET}")
         return
+
     file_count = len(all_files)
     tree_text = build_directory_tree(base_paths, allowed_extensions, exclude_dirs, exclude_files)
+
     contents = ["--- Verzeichnisstruktur / Dateien ---", tree_text, ""]
     total_lines = 0
     total_raw_lines = 0
+
     for f in all_files:
         try:
             with open(f, 'r', encoding='utf-8', errors='replace') as fh:
                 lines = fh.readlines()
             total_raw_lines += len(lines)
-            cleaned = strip_comments(lines)
+
+            if remove_comments:
+                cleaned = strip_comments(lines)
+            else:
+                cleaned = [ln.rstrip("\n") for ln in lines]
+
             total_lines += len(cleaned)
             contents.append(f"--- Start: {f} ---")
             contents.extend(cleaned)
             contents.append(f"--- Ende:   {f} ---")
         except Exception as e:
             print(f"{RED}Fehler beim Lesen von {f}: {e}{RESET}")
+
     combined = f"\n".join(contents) + f"{4*'\n'}{comment}"
+
     try:
         encoding = tiktoken.get_encoding("cl100k_base")
         token_count = len(encoding.encode(combined))
     except Exception:
         token_count = 0
+
     try:
         pyperclip.copy(combined)
         print(f"\n{tree_text}")
         print(f"\n{GREEN}{file_count} Dateien in die Zwischenablage kopiert.{RESET}")
-        print(f"Code-Zeilen: {total_lines:>6}")
+        print(f"Code-Zeilen:  {total_lines:>6}")
         print(f"Gesamtzeilen: {total_raw_lines:>6}")
         token_color = RESET
         if token_count > thres2_token:
@@ -152,7 +184,15 @@ def copy_files_to_clipboard(project_name, project_path, allowed_extensions=None,
         print(f"\n{RED}Fehler beim Kopieren: {e}{RESET}")
 
 
-def copy_logic(project_name=None, project_path=None, allowed_extensions=None, exclude_dirs=None, exclude_files=None, comment=None):
+def copy_logic(
+    project_name=None,
+    project_path=None,
+    allowed_extensions=None,
+    exclude_dirs=None,
+    exclude_files=None,
+    comment=None,
+    remove_comments: bool = True,
+):
     """Copy the project source files to the clipboard as a single structured text blob.
 
     Parameters
@@ -176,13 +216,24 @@ def copy_logic(project_name=None, project_path=None, allowed_extensions=None, ex
         Free‑form text appended after four newline characters at the very end
         of the copied blob. Useful to embed instructions for downstream tools
         or LLMs.
+    remove_comments : bool | True, optional
+        Controls if code‑comments should be excluded from prompt. When *True*
+        all comment‑tokens are stripped safely via :pymod:`tokenize`.
 
     Examples
     --------
-    >>> copy_logic("MyProject", "/path/to/project", allowed_extensions=[".py"], comment="Please refactor.")
+    copy_logic("MyProject", "/path/to/project", allowed_extensions=[".py"], comment="Please refactor.")
 
     See Also
     --------
     copy_init : Script to create a template for fast and easy prompt-generation.
     """
-    copy_files_to_clipboard(project_name, project_path, allowed_extensions, exclude_dirs, exclude_files, comment)
+    copy_files_to_clipboard(
+        project_name,
+        project_path,
+        allowed_extensions,
+        exclude_dirs,
+        exclude_files,
+        comment,
+        remove_comments,
+    )

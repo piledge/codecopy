@@ -9,15 +9,16 @@ Created on 30.07.2025 at 09:59
 from pathlib import Path
 import sys
 
-TEMPLATE = r'''#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
+TEMPLATE = r'''
 project_name = "{project_name}"
 project_path = r"{project_path}"
 
-allowed_extensions = [".py"]  # optional
-excluded_dirs = []  # optional
-excluded_files = ["test*.py", ".gitignore", ".exe", "{filename}"]  # optional
+allowed_extensions = [".py"]
+
+excluded_dirs = ['favicons']
+excluded_files = ["test*.py", "{filename}"]
+
+remove_comments = True
 
 comment = (
     "Führe nur die ausdrücklich genannten Änderungen aus.\n"
@@ -36,17 +37,16 @@ copy_logic(
     allowed_extensions,
     excluded_dirs,
     excluded_files,
-    comment
+    comment,
+    remove_comments,
 )
 '''
-
 
 def _default_project_path() -> Path:
     main = sys.modules.get('__main__')
     if hasattr(main, '__file__'):
         return Path(main.__file__).expanduser().resolve().parent
     return Path.cwd()
-
 
 def copy_init(
     project_path: str | None = None,
@@ -67,12 +67,6 @@ def copy_init(
         If *False* (default) and the file already exists, the function aborts
         and prints an informational message. If *True*, any existing file will
         be overwritten.
-
-    Notes
-    -----
-    The function infers ``project_name`` from the directory name and
-    ``project_path`` from its absolute path, substitutes both into
-    :pydata:`TEMPLATE`, and then writes the result.
     """
     target_dir = Path(project_path).expanduser().resolve() if project_path else _default_project_path()
     target_dir.mkdir(parents=True, exist_ok=True)
@@ -90,13 +84,11 @@ def copy_init(
         project_path=project_path,
         filename=filename
     )
-
     target_file.write_text(file_content, encoding="utf-8")
     print(f"Template nach '{target_file}' geschrieben.")
 
     gitignore_file = target_dir / ".gitignore"
     ignore_entry = f"/{filename}"
-
     try:
         if gitignore_file.exists():
             lines = gitignore_file.read_text(encoding="utf-8").splitlines()

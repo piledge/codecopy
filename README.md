@@ -45,11 +45,11 @@ from codecopy import copy_logic, copy_init
 
 # Variante 1: Kopiere das gesamte aktuelle Projekt (nur .py-Dateien)
 copy_logic(
-    project_name="MeinProjekt",
-    project_path="Pfad/zum/Projekt",
-    allowed_extensions=[".py"],
-    exclude_dirs=[],
-    exclude_files=["test_*.py", ".gitignore"],
+    project_name="MeinProjekt", # optional
+    project_path="Pfad/zum/Projekt", # optional
+    allowed_extensions=[".py"], # optional
+    exclude_dirs=[], # optional
+    exclude_files=["test_*.py", ".gitignore"], # optional
     comment="Bitte refaktorieren und optimieren."
 )
 
