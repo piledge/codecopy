@@ -1,3 +1,4 @@
+# copy_logic.py
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -240,7 +241,7 @@ def copy_files_to_clipboard(
                 pad = 0
             tree_console_lines[idx] = f"{path_part}{' ' * pad}{token_part}"
         else:
-            if not header_inserted and idx > 0:
+            if not header_inserted:  # Header jetzt ganz oben einfügen
                 pad = token_col_start - len(original.rstrip())
                 if pad < 1:
                     pad = 1
