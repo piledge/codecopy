@@ -17,7 +17,7 @@ import tiktoken
 from io import StringIO
 import tokenize
 
-EXCLUDE_DIRS_DEFAULT = ["migrations", "__pycache__", "node_modules", ".git", ".idea", ".venv",]
+EXCLUDE_DIRS_DEFAULT = ["migrations", "__pycache__", "node_modules", ".git", ".idea", ".venv", "venv", ]
 
 RED = "\033[31m"
 GREEN = "\033[32m"
