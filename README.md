@@ -41,9 +41,8 @@ Ein Python-Modul zur automatischen Zusammenstellung und Kopie eines Code‑Proje
 ## 🎯 Verwendung
 
 ```python
-from codecopy import copy_logic, copy_init
-
 # Variante 1: Kopiere das gesamte aktuelle Projekt (nur .py-Dateien)
+from codecopy import copy_logic, copy_init
 copy_logic(
     project_name="MeinProjekt", # optional
     project_path="Pfad/zum/Projekt", # optional
@@ -54,11 +53,17 @@ copy_logic(
 )
 
 # Variante 2: Erstelle eine prompt_export-Vorlage im Projektordner
+from codecopy import copy_logic, copy_init
 copy_init(
     project_path="Pfad/zum/Projekt",
     filename="prompt_export.py",
     overwrite=False
 )
+
+# Variante 3: Erstelle eine prompt_export-Vorlage mit Default-Werten
+from codecopy import copy_init
+copy_init()
+
 ```
 
 ---
