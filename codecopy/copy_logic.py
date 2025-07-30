@@ -140,7 +140,7 @@ def copy_files_to_clipboard(project_name, project_path, allowed_extensions=None,
         pyperclip.copy(combined)
         print(f"\n{tree_text}")
         print(f"\n{GREEN}{file_count} Dateien in die Zwischenablage kopiert.{RESET}")
-        print(f"Code-Zeilen:  {total_lines:>6}")
+        print(f"Code-Zeilen: {total_lines:>6}")
         print(f"Gesamtzeilen: {total_raw_lines:>6}")
         token_color = RESET
         if token_count > thres2_token:
@@ -153,4 +153,36 @@ def copy_files_to_clipboard(project_name, project_path, allowed_extensions=None,
 
 
 def copy_logic(project_name=None, project_path=None, allowed_extensions=None, exclude_dirs=None, exclude_files=None, comment=None):
+    """Copy the project source files to the clipboard as a single structured text blob.
+
+    Parameters
+    ----------
+    project_name : str | None, optional
+        Human‑readable label used solely for status messages. If *None* the
+        function attempts to resolve a sensible default from *project_path*.
+    project_path : str | Path | None, optional
+        Root directory—or single file—whose content should be harvested. When
+        *None* (default), the current working directory is used.
+    allowed_extensions : Sequence[str] | None, optional
+        File‑name suffixes (e.g. ``[".py", ".txt"]``) that must match in
+        order for a file to be included. *None* means "no restriction".
+    exclude_dirs : Sequence[str] | None, optional
+        Additional directory names to skip, relative to *project_path*.
+        These extend the internal :data:`EXCLUDE_DIRS_DEFAULT` list rather
+        than replacing it.
+    exclude_files : Sequence[str] | None, optional
+        ``fnmatch`` patterns of file names that should be ignored.
+    comment : str | None, optional
+        Free‑form text appended after four newline characters at the very end
+        of the copied blob. Useful to embed instructions for downstream tools
+        or LLMs.
+
+    Examples
+    --------
+    >>> copy_logic("MyProject", "/path/to/project", allowed_extensions=[".py"], comment="Please refactor.")
+
+    See Also
+    --------
+    copy_init : Script to create a template for fast and easy prompt-generation.
+    """
     copy_files_to_clipboard(project_name, project_path, allowed_extensions, exclude_dirs, exclude_files, comment)

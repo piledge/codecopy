@@ -170,3 +170,4 @@ test*.py
 *.dist
 *onefile-build
 *.exe
+/prompt_copy.py
