@@ -10,7 +10,7 @@ Ein Python-Modul zur automatischen Zusammenstellung und Kopie eines Code‑Proje
 * **Filterung**: Beinhaltet nur definierte Dateiendungen (standardmäßig `.py`), schließt Ordner wie `__pycache__`, `.git`, `.idea` u.v.m. aus.
 * **Kommentare entfernen**: Bereinigt Quellcode um Kommentare, um den „Kern“ lesbar zu machen.
 * **Zwischenablage**: Kopiert das Ergebnis mitsamt Struktur und Kommentar-Anweisungen direkt in die Zwischenablage.
-* **Prompt‑Vorlage**: Mit `copy_init` erzeugst Du auf Knopfdruck eine `prompt_copy.py`‑Datei für neue Projekte.
+* **Prompt‑Vorlage**: Mit `copy_init` erzeugst Du auf Knopfdruck eine `prompt_export.py`‑Datei für neue Projekte.
 
 ---
 
@@ -53,10 +53,10 @@ copy_logic(
     comment="Bitte refaktorieren und optimieren."
 )
 
-# Variante 2: Erstelle eine prompt_copy-Vorlage im Projektordner
+# Variante 2: Erstelle eine prompt_export-Vorlage im Projektordner
 copy_init(
     project_path="Pfad/zum/Projekt",
-    filename="prompt_copy.py",
+    filename="prompt_export.py",
     overwrite=False
 )
 ```

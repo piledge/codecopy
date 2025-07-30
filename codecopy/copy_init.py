@@ -50,10 +50,10 @@ def _default_project_path() -> Path:
 
 def copy_init(
     project_path: str | None = None,
-    filename: str = "prompt_copy.py",
+    filename: str = "prompt_export.py",
     overwrite: bool = False
 ) -> None:
-    """Create a ready-to-run *prompt_copy.py* template in *target_dir*.
+    """Create a ready-to-run *prompt_export.py* template in *target_dir*.
 
     Parameters
     ----------
@@ -62,7 +62,7 @@ def copy_init(
         directory of the calling script—or the current working directory—is
         used.
     filename : str, optional
-        Name of the template file (default: ``"prompt_copy.py"``).
+        Name of the template file (default: ``"prompt_export.py"``).
     overwrite : bool, optional
         If *False* (default) and the file already exists, the function aborts
         and prints an informational message. If *True*, any existing file will

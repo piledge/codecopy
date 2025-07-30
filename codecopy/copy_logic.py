@@ -254,14 +254,14 @@ def copy_files_to_clipboard(
         pyperclip.copy(combined)
         print(f"\n{tree_text_console}")
         print(f"\n{GREEN}{file_count} Dateien in die Zwischenablage kopiert.{RESET}")
-        print(f"Code-Zeilen:  {total_lines:>6}")
-        print(f"Gesamtzeilen: {total_raw_lines:>6}")
+        print(f"Code-Zeilen:       {total_lines:>6}")
+        print(f"Gesamtzeilen:      {total_raw_lines:>6}")
         token_color = RESET
         if token_count > thres2_token:
             token_color = RED
         elif token_count > thres1_token:
             token_color = YELLOW
-        print(f"{token_color}Tokens:       {token_count:>6}{RESET}")
+        print(f"{token_color}Gesamttokens:      {token_count:>6}{RESET}")
     except Exception as e:
         print(f"\n{RED}Fehler beim Kopieren: {e}{RESET}")
 
