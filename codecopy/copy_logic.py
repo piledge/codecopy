@@ -152,5 +152,5 @@ def copy_files_to_clipboard(project_name, project_path, allowed_extensions=None,
         print(f"\n{RED}Fehler beim Kopieren: {e}{RESET}")
 
 
-def main(project_name=None, project_path=None, allowed_extensions=None, exclude_dirs=None, exclude_files=None, comment=None):
+def copy_logic(project_name=None, project_path=None, allowed_extensions=None, exclude_dirs=None, exclude_files=None, comment=None):
     copy_files_to_clipboard(project_name, project_path, allowed_extensions, exclude_dirs, exclude_files, comment)
