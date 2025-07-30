@@ -9,6 +9,11 @@ Created on 30.07.2025 at 09:59
 from pathlib import Path
 import sys
 
+RED = "\033[31m"
+GREEN = "\033[32m"
+RESET = "\033[0m"
+
+
 TEMPLATE = r'''
 project_name = "{project_name}"
 project_path = r"{project_path}"
@@ -73,7 +78,7 @@ def copy_init(
     target_file = target_dir / filename
 
     if target_file.exists() and not overwrite:
-        print(f"'{target_file}' existiert bereits – »overwrite=True« setzen, um zu überschreiben.")
+        print(f"\n{RED}'{target_file}' existiert bereits – »overwrite=True« setzen, um zu überschreiben.{RESET}")
         return
 
     project_name = target_dir.name
@@ -85,7 +90,7 @@ def copy_init(
         filename=filename
     )
     target_file.write_text(file_content, encoding="utf-8")
-    print(f"Template nach '{target_file}' geschrieben.")
+    print(f"\n{GREEN}Template nach '{target_file}' geschrieben.{RESET}")
 
     gitignore_file = target_dir / ".gitignore"
     ignore_entry = f"/{filename}"
@@ -100,4 +105,4 @@ def copy_init(
         else:
             gitignore_file.write_text(f"{ignore_entry}\n", encoding="utf-8")
     except Exception as exc:
-        print(f"Konnte '.gitignore' nicht aktualisieren: {exc}")
+        print(f"\n{RED}Konnte '.gitignore' nicht aktualisieren: {exc}{RESET}")

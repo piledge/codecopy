@@ -10,22 +10,20 @@ Created on 27.07.2025 at 17:52
 import fnmatch
 import os
 from pathlib import Path
-
 import pyperclip
 import tiktoken
 from io import StringIO
 import tokenize
-
-EXCLUDE_DIRS_DEFAULT = ["migrations", "__pycache__", "node_modules", ".git", ".idea", ".venv", "venv", ]
 
 RED = "\033[31m"
 GREEN = "\033[32m"
 YELLOW = "\033[33m"
 RESET = "\033[0m"
 
-n_tokens = 32000
-thres1_token = 12500
-thres2_token = 16000
+EXCLUDE_DIRS_DEFAULT = ["migrations", "__pycache__", "node_modules", ".git", ".idea", ".venv", "venv", ]
+
+THRES1_TOKEN = 12500
+THRES2_TOKEN = 16000
 
 
 def is_valid_file(file_path: Path, extensions=None, exclude_files=None):
@@ -256,9 +254,9 @@ def copy_files_to_clipboard(
         print(f"Code-Zeilen:       {total_lines:>6}")
         print(f"Gesamtzeilen:      {total_raw_lines:>6}")
         token_color = RESET
-        if token_count > thres2_token:
+        if token_count > THRES2_TOKEN:
             token_color = RED
-        elif token_count > thres1_token:
+        elif token_count > THRES1_TOKEN:
             token_color = YELLOW
         print(f"{token_color}Gesamttokens:      {token_count:>6}{RESET}")
     except Exception as e:
