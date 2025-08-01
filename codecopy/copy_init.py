@@ -13,7 +13,6 @@ RED = "\033[31m"
 GREEN = "\033[32m"
 RESET = "\033[0m"
 
-
 TEMPLATE = r'''
 project_name = "{project_name}"
 project_path = r"{project_path}"
@@ -47,16 +46,18 @@ copy_logic(
 )
 '''
 
+
 def _default_project_path() -> Path:
     main = sys.modules.get('__main__')
     if hasattr(main, '__file__'):
         return Path(main.__file__).expanduser().resolve().parent
     return Path.cwd()
 
+
 def copy_init(
-    project_path: str | None = None,
-    filename: str = "prompt_export.py",
-    overwrite: bool = False
+        project_path: str | None = None,
+        filename: str = "prompt_export.py",
+        overwrite: bool = False
 ) -> None:
     """Create a ready-to-run *prompt_export.py* template in *target_dir*.
 
