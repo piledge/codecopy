@@ -21,6 +21,7 @@ YELLOW = "\033[33m"
 RESET = "\033[0m"
 
 EXCLUDE_DIRS_DEFAULT = ["migrations", "__pycache__", "node_modules", ".git", ".idea", ".venv", "venv", ]
+EXCLUDE_SUFFIXES_DEFAULT = (".dist", ".build", ".onefile-build")
 
 THRES1_TOKEN = 12500
 THRES2_TOKEN = 16000
@@ -45,7 +46,6 @@ def strip_comments(lines: list[str]) -> list[str]:
         if tok.type in (tokenize.COMMENT, tokenize.NL):
             continue
         kept.append(tok)
-
     cleaned_code = tokenize.untokenize(kept)
     return [ln.rstrip("\n") for ln in cleaned_code.splitlines() if ln.strip()]
 
@@ -61,6 +61,7 @@ def collect_files_from_path(path: Path, extensions=None, exclude_dirs=None, excl
                 d for d in dirs
                 if d.lower() not in EXCLUDE_DIRS_DEFAULT
                    and (exclude_dirs is None or d not in exclude_dirs)
+                   and not any(d.lower().endswith(suffix) for suffix in EXCLUDE_SUFFIXES_DEFAULT)
             ]
             for file in files:
                 file_path = Path(root) / file
@@ -72,7 +73,6 @@ def collect_files_from_path(path: Path, extensions=None, exclude_dirs=None, excl
 def build_directory_tree(roots, extensions=None, exclude_dirs=None, exclude_files=None):
     if not isinstance(roots, (list, tuple)):
         roots = [roots]
-
     tree_lines = []
 
     def recurse(dir_path: Path, prefix=""):
@@ -81,7 +81,12 @@ def build_directory_tree(roots, extensions=None, exclude_dirs=None, exclude_file
         entries = []
         for entry in sorted(dir_path.iterdir()):
             if entry.is_dir():
-                if entry.name.lower() in EXCLUDE_DIRS_DEFAULT or (exclude_dirs and entry.name in exclude_dirs):
+                name = entry.name
+                if (
+                        name.lower() in EXCLUDE_DIRS_DEFAULT
+                        or (exclude_dirs and name in exclude_dirs)
+                        or any(name.lower().endswith(suffix) for suffix in EXCLUDE_SUFFIXES_DEFAULT)
+                ):
                     continue
                 entries.append(entry)
             else:
@@ -106,13 +111,13 @@ def build_directory_tree(roots, extensions=None, exclude_dirs=None, exclude_file
 
 
 def copy_files_to_clipboard(
-    project_name,
-    project_path,
-    allowed_extensions=None,
-    exclude_dirs=None,
-    exclude_files=None,
-    comment=None,
-    remove_comments: bool = True,
+        project_name,
+        project_path,
+        allowed_extensions=None,
+        exclude_dirs=None,
+        exclude_files=None,
+        comment=None,
+        remove_comments: bool = True,
 ):
     print(f"\nSuche Dateien und kopiere Inhalte in '{project_name}' ...")
     base_paths = [Path(project_path).resolve()]
@@ -127,17 +132,14 @@ def copy_files_to_clipboard(
                 exclude_files=exclude_files
             )
         )
-
     if not all_files:
         print(f"\n{RED}Keine Dateien zum Kopieren gefunden.{RESET}")
         return
-
     file_token_map = {}
     try:
         _encoding = tiktoken.get_encoding("cl100k_base")
     except Exception:
         _encoding = None
-
     file_count = len(all_files)
     tree_text = build_directory_tree(base_paths, allowed_extensions, exclude_dirs, exclude_files)
 
@@ -155,12 +157,10 @@ def copy_files_to_clipboard(
                 cleaned = strip_comments(lines)
             else:
                 cleaned = [ln.rstrip("\n") for ln in lines]
-
             if _encoding is not None:
                 file_token_map[f.resolve()] = len(_encoding.encode("\n".join(cleaned)))
             else:
                 file_token_map[f.resolve()] = 0
-
             total_lines += len(cleaned)
 
             try:
@@ -174,15 +174,13 @@ def copy_files_to_clipboard(
             contents.append(f"--- Ende:  {rel_display} ---")
         except Exception as e:
             print(f"{RED}Fehler beim Lesen von {f}: {e}{RESET}")
-
-    combined = f"\n".join(contents) + f"{4*'\n'}{comment}"
+    combined = f"\n".join(contents) + f"{4 * '\n'}{comment}"
 
     try:
         encoding = tiktoken.get_encoding("cl100k_base")
         token_count = len(encoding.encode(combined))
     except Exception:
         token_count = 0
-
     tree_console_lines = []
 
     def recurse_console(dir_path: Path, prefix=""):
@@ -191,7 +189,12 @@ def copy_files_to_clipboard(
         entries = []
         for entry in sorted(dir_path.iterdir()):
             if entry.is_dir():
-                if entry.name.lower() in EXCLUDE_DIRS_DEFAULT or (exclude_dirs and entry.name in exclude_dirs):
+                name = entry.name
+                if (
+                        name.lower() in EXCLUDE_DIRS_DEFAULT
+                        or (exclude_dirs and name in exclude_dirs)
+                        or any(name.lower().endswith(suffix) for suffix in EXCLUDE_SUFFIXES_DEFAULT)
+                ):
                     continue
                 entries.append(entry)
             else:
@@ -215,7 +218,6 @@ def copy_files_to_clipboard(
         elif root.is_file():
             tok = file_token_map.get(root.resolve(), 0)
             tree_console_lines.append(f"{root.name} {tok:>6}")
-
     max_path_len = 0
     for ln in tree_console_lines:
         stripped = ln.rstrip()
@@ -223,9 +225,8 @@ def copy_files_to_clipboard(
             path_len = len(ln) - 7
             if path_len > max_path_len:
                 max_path_len = path_len
-
-    TOKEN_GAP = 4
-    token_col_start = max_path_len + TOKEN_GAP
+    token_gap = 4
+    token_col_start = max_path_len + token_gap
 
     header_inserted = False
     for idx, original in enumerate(tree_console_lines):
@@ -238,13 +239,12 @@ def copy_files_to_clipboard(
                 pad = 0
             tree_console_lines[idx] = f"{path_part}{' ' * pad}{token_part}"
         else:
-            if not header_inserted:  # Header jetzt ganz oben einfügen
+            if not header_inserted:
                 pad = token_col_start - len(original.rstrip())
                 if pad < 1:
                     pad = 1
                 tree_console_lines[idx] = f"{original}{' ' * pad} Tokens"
                 header_inserted = True
-
     tree_text_console = "\n".join(tree_console_lines)
 
     try:
@@ -264,16 +264,15 @@ def copy_files_to_clipboard(
 
 
 def copy_logic(
-    project_name=None,
-    project_path=None,
-    allowed_extensions=None,
-    exclude_dirs=None,
-    exclude_files=None,
-    comment=None,
-    remove_comments: bool = True,
+        project_name=None,
+        project_path=None,
+        allowed_extensions=None,
+        exclude_dirs=None,
+        exclude_files=None,
+        comment=None,
+        remove_comments: bool = True,
 ):
     """Copy the project source files to the clipboard as a single structured text blob.
-
     Parameters
     ----------
     project_name : str | None, optional
@@ -298,11 +297,9 @@ def copy_logic(
     remove_comments : bool | True, optional
         Controls if code‑comments should be excluded from prompt. When *True*
         all comment‑tokens are stripped safely via :pymod:`tokenize`.
-
     Examples
     --------
     copy_logic("MyProject", "/path/to/project", allowed_extensions=[".py"], comment="Please refactor.")
-
     See Also
     --------
     copy_init : Script to create a template for fast and easy prompt-generation.
