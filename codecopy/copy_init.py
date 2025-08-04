@@ -31,7 +31,7 @@ comment = (
     "Erhalte Formatierung, Kommentare, Reihenfolge und Imports exakt.\n"
     "Keine Umbenennungen, Auto-Formatierung oder neue Sortierungen.\n"
     "Nutze Best Practices.\n"
-    "Änderungen sollen bestehende Funktionalität nicht beeinträchtigen.\n"
+    "Änderungen dürfen bestehende Funktionalität nicht beeinträchtigen.\n"
     "Bei Unklarheiten: nachfragen, nicht raten.\n"
 )
 
