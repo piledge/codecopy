@@ -43,11 +43,11 @@ def strip_comments(lines: list[str]) -> list[str]:
     source = "".join(lines)
     kept = []
     for tok in tokenize.generate_tokens(StringIO(source).readline):
-        if tok.type in (tokenize.COMMENT, tokenize.NL):
+        if tok.type == tokenize.COMMENT:
             continue
         kept.append(tok)
     cleaned_code = tokenize.untokenize(kept)
-    return [ln.rstrip("\n") for ln in cleaned_code.splitlines() if ln.strip()]
+    return cleaned_code.splitlines()
 
 
 def collect_files_from_path(path: Path, extensions=None, exclude_dirs=None, exclude_files=None):
