@@ -29,7 +29,7 @@ comment = (
     "Gib jede geänderte Datei vollständig von Anfang bis Ende in einem eigenen Codeblock aus, beginnend mit dem Dateipfad.\n"
     "Unveränderte Dateien nicht anzeigen, stattdessen ‹keine Änderung› schreiben.\n"
     "Erhalte Formatierung, Kommentare, Reihenfolge und Imports exakt.\n"
-    "Keine Umbenennungen, Auto-Formatierung, neue Sortierungen und unnötige Kommentare.\n"
+    "Keine Umbenennungen, Auto-Formatierung, Neusortierungen und unnötige Kommentare.\n"
     "Nutze Best Practices.\n"
     "Änderungen dürfen bestehende Funktionalität nicht beeinträchtigen.\n"
     "Bei Unklarheiten: nachfragen, nicht raten.\n"
