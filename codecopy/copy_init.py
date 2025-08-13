@@ -25,6 +25,7 @@ excluded_files = ["test*.py", "{filename}"]
 remove_comments = True
 
 comment = (
+    "Denk intensiv drüber nach.\n"
     "Führe nur die ausdrücklich genannten Änderungen aus.\n"
     "Gib jede geänderte Datei vollständig von Anfang bis Ende in einem eigenen Codeblock aus, beginnend mit dem Dateipfad.\n"
     "Unveränderte Dateien nicht anzeigen, stattdessen ‹keine Änderung› schreiben.\n"
